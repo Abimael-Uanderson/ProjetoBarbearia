@@ -1,0 +1,27 @@
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Diretórios de build
+build/
+bin/
+out/
+target/
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+*.iml
+
+# Temporários
+*.log
+*.tmp
+*.swp
+
+# Arquivos gerados
+*.war
+*.ear
