@@ -7,7 +7,21 @@ public class Cliente {
     private String email;
     private String senha;
     
-    public String getCpf() {
+    
+    public Cliente() {
+		super();
+	}
+    
+	public Cliente(String cpf, String nome, String telefone, String email, String senha) {
+		super();
+		this.cpf = cpf;
+		this.nome = nome;
+		this.telefone = telefone;
+		this.email = email;
+		this.senha = senha;
+	}
+
+	public String getCpf() {
 		return cpf;
 	}
 	public void setCpf(String cpf) {

@@ -6,6 +6,30 @@ public class Corte {
     private Double valor_corte;
     private int duracao;
     
+    
+	public Corte() {
+		super();
+	}
+	
+	
+	public Corte(String nome_corte, Double valor_corte, int duracao) {
+		super();
+		this.nome_corte = nome_corte;
+		this.valor_corte = valor_corte;
+		this.duracao = duracao;
+	}
+	
+	
+
+	public Corte(int id_corte, String nome_corte, Double valor_corte, int duracao) {
+		super();
+		this.id_corte = id_corte;
+		this.nome_corte = nome_corte;
+		this.valor_corte = valor_corte;
+		this.duracao = duracao;
+	}
+
+
 	public int getId_corte() {
 		return id_corte;
 	}

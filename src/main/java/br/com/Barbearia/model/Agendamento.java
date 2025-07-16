@@ -9,6 +9,30 @@ public class Agendamento {
     private int duracao_totalAg;
     private Cliente cliente;
     
+    public Agendamento() {
+		super();
+	}
+    
+	public Agendamento(LocalDateTime data_atendimentoAg, String status_agendamentoAg, int duracao_totalAg,
+			Cliente cliente) {
+		super();
+		this.data_atendimentoAg = data_atendimentoAg;
+		this.status_agendamentoAg = status_agendamentoAg;
+		this.duracao_totalAg = duracao_totalAg;
+		this.cliente = cliente;
+	}
+	
+	public Agendamento(int id_agendamentoAg, LocalDateTime data_atendimentoAg, String status_agendamentoAg,
+			int duracao_totalAg, Cliente cliente) {
+		super();
+		this.id_agendamentoAg = id_agendamentoAg;
+		this.data_atendimentoAg = data_atendimentoAg;
+		this.status_agendamentoAg = status_agendamentoAg;
+		this.duracao_totalAg = duracao_totalAg;
+		this.cliente = cliente;
+	}
+	
+
 	public int getId_agendamentoAg() {
 		return id_agendamentoAg;
 	}

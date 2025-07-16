@@ -5,6 +5,27 @@ public class Especialidade {
     private Corte corte;
     private Barbeiro barbeiro;
     
+    
+	public Especialidade() {
+		super();
+	}
+	
+	
+	public Especialidade(Corte corte, Barbeiro barbeiro) {
+		super();
+		this.corte = corte;
+		this.barbeiro = barbeiro;
+	}
+
+	
+	public Especialidade(int id_especialidadeEp, Corte corte, Barbeiro barbeiro) {
+		super();
+		this.id_especialidadeEp = id_especialidadeEp;
+		this.corte = corte;
+		this.barbeiro = barbeiro;
+	}
+
+
 	public int getId_especialidadeEp() {
 		return id_especialidadeEp;
 	}

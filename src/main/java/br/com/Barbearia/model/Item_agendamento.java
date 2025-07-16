@@ -6,6 +6,29 @@ public class Item_agendamento {
     private Especialidade especialidade;
     private Agendamento agendamento;
     
+    
+	public Item_agendamento() {
+		super();
+	}
+	
+	
+	public Item_agendamento(Double valor_itemIg, Especialidade especialidade, Agendamento agendamento) {
+		super();
+		this.valor_itemIg = valor_itemIg;
+		this.especialidade = especialidade;
+		this.agendamento = agendamento;
+	}
+
+	
+	public Item_agendamento(int id_itemIg, Double valor_itemIg, Especialidade especialidade, Agendamento agendamento) {
+		super();
+		this.id_itemIg = id_itemIg;
+		this.valor_itemIg = valor_itemIg;
+		this.especialidade = especialidade;
+		this.agendamento = agendamento;
+	}
+
+
 	public int getId_itemIg() {
 		return id_itemIg;
 	}
