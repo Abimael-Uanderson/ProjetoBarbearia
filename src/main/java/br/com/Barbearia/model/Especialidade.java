@@ -1,7 +1,6 @@
 package br.com.Barbearia.model;
 
 public class Especialidade {
-	
 	private int id_especialidadeEp;
     private Corte corte;
     private Barbeiro barbeiro;
