@@ -25,8 +25,9 @@ public class BarbeiroDAO {
             stmt.setString(5, barbeiro.getSenha());
             
             stmt.executeUpdate();
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -43,8 +44,9 @@ public class BarbeiroDAO {
             stmt.setString(5, barbeiro.getCpf());
             
             stmt.executeUpdate();
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -57,8 +59,9 @@ public class BarbeiroDAO {
             stmt.setString(1, cpf);
             
             stmt.executeUpdate();
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -80,8 +83,9 @@ public class BarbeiroDAO {
                 
                 barbeiros.add(barbeiro);
             }
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return barbeiros;
     }
@@ -105,8 +109,9 @@ public class BarbeiroDAO {
                     barbeiro.setSenha(rs.getString("senha"));
                 }
             }
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return barbeiro;
     }
@@ -130,8 +135,9 @@ public class BarbeiroDAO {
                     barbeiro.setSenha(rs.getString("senha"));
                 }
             }
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return barbeiro;
     }

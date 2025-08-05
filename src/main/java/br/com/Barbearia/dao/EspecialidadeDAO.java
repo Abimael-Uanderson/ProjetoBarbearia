@@ -24,6 +24,8 @@ public class EspecialidadeDAO {
             stmt.setString(2, especialidade.getBarbeiro().getCpf());
             
             stmt.executeUpdate();
+        }catch (SQLException e){
+        	e.printStackTrace();
         }
     }
 
@@ -36,37 +38,61 @@ public class EspecialidadeDAO {
             stmt.setInt(1, id);
             
             stmt.executeUpdate();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
     public List<Especialidade> listarEspecialidades() throws SQLException {
         List<Especialidade> especialidades = new ArrayList<>();
-        String sql = "SELECT id_especialidadeEp, corte, barbeiro FROM especialidade";
+        
+        String sql = "SELECT esp.id_especialidadeEp, "
+                   + "c.nome_corte, c.valor_corte, c.id_corte, c.duracao, "
+                   + "b.cpf AS barbeiro_cpf, b.nome AS barbeiro_nome "
+                   + "FROM especialidade AS esp "
+                   + "INNER JOIN corte AS c ON esp.corte = c.id_corte "
+                   + "INNER JOIN barbeiro AS b ON esp.barbeiro = b.cpf";
 
         try (Connection conexao = Conexao.getConnection();
-             PreparedStatement stmt = conexao.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+             PreparedStatement stmt = conexao.prepareStatement(sql)) {
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Especialidade especialidade = new Especialidade();
+                    especialidade.setId_especialidadeEp(rs.getInt("id_especialidadeEp"));
 
-            while (rs.next()) {
-                Especialidade especialidade = new Especialidade();
-                especialidade.setId_especialidadeEp(rs.getInt("id_especialidadeEp"));
+                    Corte corte = new Corte();
+                    corte.setId_corte(rs.getInt("id_corte"));
+                    corte.setNome_corte(rs.getString("nome_corte"));
+                    corte.setValor_corte(rs.getBigDecimal("valor_corte").doubleValue()); // Convertendo para Double
+                    corte.setDuracao(rs.getInt("duracao"));
+                    especialidade.setCorte(corte);
 
-                Corte corte = new Corte();
-                corte.setId_corte(rs.getInt("corte"));
-                especialidade.setCorte(corte);
-
-                Barbeiro barbeiro = new Barbeiro();
-                barbeiro.setCpf(rs.getString("barbeiro"));
-                especialidade.setBarbeiro(barbeiro);
-                
-                especialidades.add(especialidade);
+                    Barbeiro barbeiro = new Barbeiro();
+                    barbeiro.setCpf(rs.getString("barbeiro_cpf"));
+                    barbeiro.setNome(rs.getString("barbeiro_nome"));
+                    especialidade.setBarbeiro(barbeiro);
+                    
+                    especialidades.add(especialidade);
+                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return especialidades;
     }
     
     public Especialidade buscarEspecialidadePorId(int id) throws SQLException {
-        String sql = "SELECT id_especialidadeEp, corte, barbeiro FROM especialidade WHERE id_especialidadeEp = ?";
+        String sql = "SELECT esp.id_especialidadeEp, "
+                   + "c.nome_corte, c.valor_corte, c.id_corte, c.duracao, "
+                   + "b.cpf AS barbeiro_cpf, b.nome AS barbeiro_nome "
+                   + "FROM especialidade AS esp "
+                   + "INNER JOIN corte AS c ON esp.corte = c.id_corte "
+                   + "INNER JOIN barbeiro AS b ON esp.barbeiro = b.cpf "
+                   + "WHERE esp.id_especialidadeEp = ?"; 
+        
         Especialidade especialidade = null;
 
         try (Connection conexao = Conexao.getConnection();
@@ -80,14 +106,21 @@ public class EspecialidadeDAO {
                     especialidade.setId_especialidadeEp(rs.getInt("id_especialidadeEp"));
 
                     Corte corte = new Corte();
-                    corte.setId_corte(rs.getInt("corte"));
+                    corte.setId_corte(rs.getInt("id_corte"));
+                    corte.setNome_corte(rs.getString("nome_corte"));
+                    corte.setValor_corte(rs.getBigDecimal("valor_corte").doubleValue());
+                    corte.setDuracao(rs.getInt("duracao"));
                     especialidade.setCorte(corte);
 
                     Barbeiro barbeiro = new Barbeiro();
-                    barbeiro.setCpf(rs.getString("barbeiro"));
+                    barbeiro.setCpf(rs.getString("barbeiro_cpf"));
+                    barbeiro.setNome(rs.getString("barbeiro_nome"));
                     especialidade.setBarbeiro(barbeiro);
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return especialidade;
     }

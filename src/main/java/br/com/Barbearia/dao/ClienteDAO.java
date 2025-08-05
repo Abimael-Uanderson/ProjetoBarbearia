@@ -23,8 +23,9 @@ public class ClienteDAO {
             stmt.setString(5, cliente.getSenha().toString());
             
             stmt.executeUpdate();
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
 	}
 	
@@ -41,8 +42,9 @@ public class ClienteDAO {
             stmt.setString(5, cliente.getCpf());
             
             stmt.executeUpdate();
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
 	}
 	
@@ -54,8 +56,9 @@ public class ClienteDAO {
             stmt.setString(1, cpf);
             
             stmt.executeUpdate();
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 	
@@ -79,8 +82,9 @@ public class ClienteDAO {
                
                 clientes.add(cliente);
             }
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return clientes;
     }
@@ -104,8 +108,9 @@ public class ClienteDAO {
                     cliente.setSenha(rs.getString("senha"));
                 }
             }
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return cliente;
     }
@@ -130,8 +135,9 @@ public class ClienteDAO {
                     cliente.setSenha(rs.getString("senha"));
                 }
             }
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return cliente;
     }

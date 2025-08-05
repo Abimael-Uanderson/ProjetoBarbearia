@@ -24,8 +24,9 @@ public class CorteDAO {
             stmt.setInt(3, corte.getDuracao());
             
             stmt.executeUpdate();
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -55,8 +56,9 @@ public class CorteDAO {
             stmt.setInt(1, id);
             
             stmt.executeUpdate();
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -77,8 +79,9 @@ public class CorteDAO {
                 
                 cortes.add(corte);
             }
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return cortes;
     }
@@ -101,8 +104,9 @@ public class CorteDAO {
                     corte.setDuracao(rs.getInt("duracao"));
                 }
             }
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return corte;
     }

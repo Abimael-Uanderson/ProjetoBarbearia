@@ -26,8 +26,9 @@ public class AgendamentoDAO {
             stmt.setString(4, agendamento.getCliente().getCpf());
             
             stmt.executeUpdate();
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -44,8 +45,9 @@ public class AgendamentoDAO {
             stmt.setInt(5, agendamento.getId_agendamentoAg());
             
             stmt.executeUpdate();
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -58,8 +60,9 @@ public class AgendamentoDAO {
             stmt.setInt(1, id);
             
             stmt.executeUpdate();
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -89,8 +92,9 @@ public class AgendamentoDAO {
                 
                 agendamentos.add(agendamento);
             }
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return agendamentos;
     }
@@ -124,8 +128,9 @@ public class AgendamentoDAO {
                     agendamento.setCliente(cliente);
                 }
             }
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return agendamento;
     }
@@ -158,8 +163,9 @@ public class AgendamentoDAO {
                     agendamentos.add(agendamento);
                 }
             }
-        }catch (SQLException e){
-        	e.printStackTrace();
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
         }
         return agendamentos;
     }
