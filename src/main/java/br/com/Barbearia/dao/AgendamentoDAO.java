@@ -26,6 +26,8 @@ public class AgendamentoDAO {
             stmt.setString(4, agendamento.getCliente().getCpf());
             
             stmt.executeUpdate();
+        }catch (SQLException e){
+        	e.printStackTrace();
         }
     }
 
@@ -42,6 +44,8 @@ public class AgendamentoDAO {
             stmt.setInt(5, agendamento.getId_agendamentoAg());
             
             stmt.executeUpdate();
+        }catch (SQLException e){
+        	e.printStackTrace();
         }
     }
 
@@ -54,12 +58,17 @@ public class AgendamentoDAO {
             stmt.setInt(1, id);
             
             stmt.executeUpdate();
+        }catch (SQLException e){
+        	e.printStackTrace();
         }
     }
 
     public List<Agendamento> listarAgendamentos() throws SQLException {
         List<Agendamento> agendamentos = new ArrayList<>();
-        String sql = "SELECT id_agendamentoAg, data_atendimentoAg, status_agendamentoAg, duracao_totalAg, cliente FROM agendamento";
+        String sql = "SELECT ag.id_agendamentoAg, ag.data_atendimentoAg, ag.status_agendamentoAg, ag.duracao_totalAg, c.cpf, c.nome, c.telefone "
+        			+ "FROM agendamento AS ag "
+        			+ "INNER JOIN cliente AS c "
+        			+ "ON ag.cliente = c.cpf ";
 
         try (Connection conexao = Conexao.getConnection();
              PreparedStatement stmt = conexao.prepareStatement(sql);
@@ -73,17 +82,26 @@ public class AgendamentoDAO {
                 agendamento.setDuracao_totalAg(rs.getInt("duracao_totalAg"));
                 
                 Cliente cliente = new Cliente();
-                cliente.setCpf(rs.getString("cliente"));
+                cliente.setCpf(rs.getString("cpf"));
+                cliente.setNome(rs.getString("nome"));
+                cliente.setTelefone(rs.getString("telefone"));
                 agendamento.setCliente(cliente);
                 
                 agendamentos.add(agendamento);
             }
+        }catch (SQLException e){
+        	e.printStackTrace();
         }
         return agendamentos;
     }
     
     public Agendamento buscarAgendamentoPorId(int id) throws SQLException {
-        String sql = "SELECT id_agendamentoAg, data_atendimentoAg, status_agendamentoAg, duracao_totalAg, cliente FROM agendamento WHERE id_agendamentoAg = ?";
+    	String sql = "SELECT ag.id_agendamentoAg, ag.data_atendimentoAg, ag.status_agendamentoAg, ag.duracao_totalAg, c.cpf, c.nome, c.telefone "
+    			+ "FROM agendamento AS ag "
+    			+ "INNER JOIN cliente AS c "
+    			+ "ON ag.cliente = c.cpf "
+    			+ "WHERE id_agendamentoAg = ?";
+        
         Agendamento agendamento = null;
 
         try (Connection conexao = Conexao.getConnection();
@@ -100,11 +118,49 @@ public class AgendamentoDAO {
                     agendamento.setDuracao_totalAg(rs.getInt("duracao_totalAg"));
 
                     Cliente cliente = new Cliente();
-                    cliente.setCpf(rs.getString("cliente"));
+                    cliente.setCpf(rs.getString("cpf"));
+                    cliente.setNome(rs.getString("nome"));
+                    cliente.setTelefone(rs.getString("telefone"));
                     agendamento.setCliente(cliente);
                 }
             }
+        }catch (SQLException e){
+        	e.printStackTrace();
         }
         return agendamento;
+    }
+    
+    
+    public List<Agendamento> listarAgendamentosPorCliente(String cpfCliente) throws SQLException {
+        List<Agendamento> agendamentos = new ArrayList<>();
+        String sql = "SELECT ag.id_agendamentoAg, ag.data_atendimentoAg, ag.status_agendamentoAg, ag.duracao_totalAg, "
+                   + "c.cpf, c.nome, c.telefone "
+                   + "FROM agendamento ag "
+                   + "INNER JOIN cliente c ON ag.cliente = c.cpf "
+                   + "WHERE c.cpf = ?";
+
+        try (Connection conexao = Conexao.getConnection();
+             PreparedStatement stmt = conexao.prepareStatement(sql)) {
+            stmt.setString(1, cpfCliente);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Agendamento agendamento = new Agendamento();
+                    agendamento.setId_agendamentoAg(rs.getInt("id_agendamentoAg"));
+                    agendamento.setData_atendimentoAg(rs.getTimestamp("data_atendimentoAg").toLocalDateTime());
+                    agendamento.setStatus_agendamentoAg(rs.getString("status_agendamentoAg"));
+                    agendamento.setDuracao_totalAg(rs.getInt("duracao_totalAg"));
+
+                    Cliente cliente = new Cliente();
+                    cliente.setCpf(rs.getString("cpf"));
+                    cliente.setNome(rs.getString("nome"));
+                    cliente.setTelefone(rs.getString("telefone"));
+                    agendamento.setCliente(cliente);
+                    agendamentos.add(agendamento);
+                }
+            }
+        }catch (SQLException e){
+        	e.printStackTrace();
+        }
+        return agendamentos;
     }
 }
