@@ -70,7 +70,7 @@ public class BarbeiroController extends HttpServlet {
         barbeiro.setEmail(email);
         barbeiro.setSenha(senha);
       
-        // Supondo que o BarbeiroDAO tenha métodos similares ao ClienteDAO
+      
         if (barbeiroDAO.buscarBarbeiroPorCpf(cpf) != null || barbeiroDAO.buscarBarbeiroPorEmail(email) != null) {
             response.getWriter().write("CPF ou E-mail já cadastrado.");
             return;
@@ -98,11 +98,11 @@ public class BarbeiroController extends HttpServlet {
 	public void verPerfil(HttpServletRequest request, HttpServletResponse response) throws Exception {
 	    HttpSession session = request.getSession(false);
 	    if (session == null || session.getAttribute("barbeiroLogado") == null) {
-	        response.sendRedirect("loginBarbeiro.jsp"); // Sugestão: uma página de login para barbeiros
+	        response.sendRedirect("loginBarbeiro.jsp"); 
 	    } else {
 	        Barbeiro barbeiro = (Barbeiro) session.getAttribute("barbeiroLogado");
 	        request.setAttribute("barbeiro", barbeiro);
-	        request.getRequestDispatcher("perfilBarbeiro.jsp").forward(request, response); // Sugestão: uma página de perfil para barbeiros
+	        request.getRequestDispatcher("perfilBarbeiro.jsp").forward(request, response); 
 	    }
 	}
 

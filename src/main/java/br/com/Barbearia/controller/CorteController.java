@@ -27,7 +27,6 @@ public class CorteController extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		try {
-			// Por padrão, uma requisição GET listará os cortes
 			listarCortes(request, response);
 		} catch (Exception e) {
 			throw new ServletException(e);
@@ -39,7 +38,7 @@ public class CorteController extends HttpServlet {
 			throws ServletException, IOException {
 		String action = request.getParameter("action");
 		if (action == null) {
-			action = "listar"; // Ação padrão se nenhuma for especificada
+			action = "listar"; 
 		}
 
 		try {
@@ -75,7 +74,7 @@ public class CorteController extends HttpServlet {
 
 		corteDAO.inserirCorte(novoCorte);
 		
-		// Redireciona para a lista de cortes para ver o novo item
+		
 		response.sendRedirect("CorteController?action=listar");
 	}
 
@@ -107,7 +106,7 @@ public class CorteController extends HttpServlet {
 		List<Corte> listaCortes = corteDAO.listarCortes();
 		request.setAttribute("listaCortes", listaCortes);
 		
-		// Encaminha para uma página JSP que exibirá a lista
+		
 		RequestDispatcher dispatcher = request.getRequestDispatcher("listaCortes.jsp");
 		dispatcher.forward(request, response);
 	}

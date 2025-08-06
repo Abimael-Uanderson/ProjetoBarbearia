@@ -112,7 +112,7 @@ public class ClienteController extends HttpServlet {
             return;
         }
 
-        // Pega o cliente da sessão para garantir que ele só edite o próprio perfil
+        
         Cliente clienteLogado = (Cliente) session.getAttribute("usuarioLogado");
 
         // Pega os novos dados do formulário
@@ -121,7 +121,7 @@ public class ClienteController extends HttpServlet {
         String email = request.getParameter("email");
         String senha = request.getParameter("senha");
 
-        // Atualiza o objeto com os novos dados
+        
         clienteLogado.setNome(nome);
         clienteLogado.setTelefone(telefone);
         clienteLogado.setEmail(email);
@@ -129,7 +129,7 @@ public class ClienteController extends HttpServlet {
 
         clienteDAO.editarCliente(clienteLogado);
 
-        // Atualiza o objeto na sessão
+      
         session.setAttribute("usuarioLogado", clienteLogado);
 
         response.getWriter().write("Perfil atualizado com sucesso!");
@@ -144,10 +144,10 @@ public class ClienteController extends HttpServlet {
 
         Cliente clienteLogado = (Cliente) session.getAttribute("usuarioLogado");
         
-        // Apaga o cliente do banco de dados
+       
         clienteDAO.apagarCliente(clienteLogado.getCpf());
 
-        // Invalida a sessão (faz o logout)
+        
         session.invalidate();
 
         response.getWriter().write("Conta excluída com sucesso.");
@@ -159,7 +159,6 @@ public class ClienteController extends HttpServlet {
             session.invalidate();
         }
         response.getWriter().write("Logout efetuado com sucesso.");
-        // Ou, se preferir redirecionar para uma página:
-        // response.sendRedirect("login.jsp");
+        
     }
 }
