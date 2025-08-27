@@ -63,8 +63,8 @@ public class CorteController extends HttpServlet {
 	}
 
 	private void cadastrarCorte(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		String nome = request.getParameter("nome_corte");
-		double valor = Double.parseDouble(request.getParameter("valor_corte"));
+		String nome = request.getParameter("nome");
+		double valor = Double.parseDouble(request.getParameter("valor"));
 		int duracao = Integer.parseInt(request.getParameter("duracao"));
 
 		Corte novoCorte = new Corte();
@@ -74,14 +74,14 @@ public class CorteController extends HttpServlet {
 
 		corteDAO.inserirCorte(novoCorte);
 		
-		
+		response.getWriter().write("Corte criado com sucesso!");
 		response.sendRedirect("CorteController?action=listar");
 	}
 
 	private void editarCorte(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		int id = Integer.parseInt(request.getParameter("id_corte"));
-		String nome = request.getParameter("nome_corte");
-		double valor = Double.parseDouble(request.getParameter("valor_corte"));
+		int id = Integer.parseInt(request.getParameter("id"));
+		String nome = request.getParameter("nome");
+		double valor = Double.parseDouble(request.getParameter("valor"));
 		int duracao = Integer.parseInt(request.getParameter("duracao"));
 
 		Corte corte = new Corte();
@@ -96,7 +96,7 @@ public class CorteController extends HttpServlet {
 	}
 
 	private void apagarCorte(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		int id = Integer.parseInt(request.getParameter("id_corte"));
+		int id = Integer.parseInt(request.getParameter("id"));
 		corteDAO.apagarCorte(id);
 		
 		response.sendRedirect("CorteController?action=listar");
