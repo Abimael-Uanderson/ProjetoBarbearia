@@ -90,7 +90,7 @@
         </form>
 
         <div class="text-center mt-6">
-            <a href="login.jsp" class="font-montserrat text-sm text-wine-main underline">
+            <a href="loginPessoa.jsp" class="font-montserrat text-sm text-wine-main underline">
                 Já tenho conta
             </a>
         </div>

@@ -1,7 +1,7 @@
 package br.com.Barbearia.controller;
 
 import java.io.IOException;
-import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.List;
 
 import br.com.Barbearia.dao.CorteDAO;
@@ -13,21 +13,39 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet("/CorteController")
+@WebServlet("/corte")
 public class CorteController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
 	private CorteDAO corteDAO;
 
 	@Override
-	public void init() throws ServletException {
+	public void init() {
 		corteDAO = new CorteDAO();
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		String action = request.getParameter("action");
+		if (action == null) {
+			action = "listar"; // Ação padrão para admin
+		}
+		
 		try {
-			listarCortes(request, response);
+			switch (action) {
+				case "listarParaAgendamento": // NOVA AÇÃO PARA O FLUXO DO CLIENTE
+					listarCortesParaAgendamento(request, response);
+					break;
+				case "formNovo":
+					mostrarFormNovo(request, response);
+					break;
+				case "formEdicao":
+					mostrarFormEdicao(request, response);
+					break;
+				case "listar": // Ação de admin
+				default:
+					listarCortes(request, response);
+					break;
+			}
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
@@ -37,9 +55,6 @@ public class CorteController extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		String action = request.getParameter("action");
-		if (action == null) {
-			action = "listar"; 
-		}
 
 		try {
 			switch (action) {
@@ -52,7 +67,6 @@ public class CorteController extends HttpServlet {
 				case "apagar":
 					apagarCorte(request, response);
 					break;
-				case "listar":
 				default:
 					listarCortes(request, response);
 					break;
@@ -62,52 +76,66 @@ public class CorteController extends HttpServlet {
 		}
 	}
 
-	private void cadastrarCorte(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		String nome = request.getParameter("nome");
-		double valor = Double.parseDouble(request.getParameter("valor"));
-		int duracao = Integer.parseInt(request.getParameter("duracao"));
-
-		Corte novoCorte = new Corte();
-		novoCorte.setNome_corte(nome);
-		novoCorte.setValor_corte(valor);
-		novoCorte.setDuracao(duracao);
-
-		corteDAO.inserirCorte(novoCorte);
-		
-		response.getWriter().write("Corte criado com sucesso!");
-		response.sendRedirect("CorteController?action=listar");
-	}
-
-	private void editarCorte(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		int id = Integer.parseInt(request.getParameter("id"));
-		String nome = request.getParameter("nome");
-		double valor = Double.parseDouble(request.getParameter("valor"));
-		int duracao = Integer.parseInt(request.getParameter("duracao"));
-
-		Corte corte = new Corte();
-		corte.setId_corte(id);
-		corte.setNome_corte(nome);
-		corte.setValor_corte(valor);
-		corte.setDuracao(duracao);
-
-		corteDAO.editarCorte(corte);
-		
-		response.sendRedirect("CorteController?action=listar");
-	}
-
-	private void apagarCorte(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		int id = Integer.parseInt(request.getParameter("id"));
-		corteDAO.apagarCorte(id);
-		
-		response.sendRedirect("CorteController?action=listar");
-	}
-
-	private void listarCortes(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		List<Corte> listaCortes = corteDAO.listarCortes();
+	// --- NOVO MÉTODO PARA O FLUXO DE AGENDAMENTO ---
+	private void listarCortesParaAgendamento(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
+		List<Corte> listaCortes = corteDAO.listar();
 		request.setAttribute("listaCortes", listaCortes);
 		
+		System.out.println("DEBUG: Cortes encontrados no banco de dados: " + listaCortes.size());
 		
-		RequestDispatcher dispatcher = request.getRequestDispatcher("listaCortes.jsp");
+		RequestDispatcher dispatcher = request.getRequestDispatcher("agendamento-passo1-servico.jsp");
 		dispatcher.forward(request, response);
 	}
+
+	// --- MÉTODOS PARA ADMIN ---
+	private void listarCortes(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
+		List<Corte> listaCortes = corteDAO.listar();
+		request.setAttribute("listaCortes", listaCortes);
+		RequestDispatcher dispatcher = request.getRequestDispatcher("admin/lista-cortes.jsp");
+		dispatcher.forward(request, response);
+	}
+	
+	private void mostrarFormNovo(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		RequestDispatcher dispatcher = request.getRequestDispatcher("admin/form-corte.jsp");
+		dispatcher.forward(request, response);
+	}
+	
+	private void mostrarFormEdicao(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
+		int id = Integer.parseInt(request.getParameter("id"));
+		Corte corteExistente = corteDAO.buscarPorId(id);
+		request.setAttribute("corte", corteExistente);
+		RequestDispatcher dispatcher = request.getRequestDispatcher("admin/form-corte.jsp");
+		dispatcher.forward(request, response);
+	}
+
+	private void cadastrarCorte(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {
+		String nome = request.getParameter("nome");
+		double valor = Double.parseDouble(request.getParameter("valor"));
+		int duracao = Integer.parseInt(request.getParameter("duracao"));
+
+		Corte novoCorte = new Corte(nome, valor, duracao);
+		corteDAO.inserir(novoCorte);
+		
+		response.sendRedirect("corte?action=listar&msg=sucesso");
+	}
+
+	private void editarCorte(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {
+		int id = Integer.parseInt(request.getParameter("id"));
+		String nome = request.getParameter("nome");
+		double valor = Double.parseDouble(request.getParameter("valor"));
+		int duracao = Integer.parseInt(request.getParameter("duracao"));
+
+		Corte corte = new Corte(id, nome, valor, duracao);
+		corteDAO.editar(corte);
+		
+		response.sendRedirect("corte?action=listar&msg=editado");
+	}
+
+	private void apagarCorte(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {
+		int id = Integer.parseInt(request.getParameter("id"));
+		corteDAO.apagar(id);
+		
+		response.sendRedirect("corte?action=listar&msg=apagado");
+	}
 }
+

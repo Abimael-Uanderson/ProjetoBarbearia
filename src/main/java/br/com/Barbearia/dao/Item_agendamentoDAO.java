@@ -1,6 +1,5 @@
 package br.com.Barbearia.dao;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,18 +11,18 @@ import br.com.Barbearia.model.Agendamento;
 import br.com.Barbearia.model.Barbeiro;
 import br.com.Barbearia.model.Corte;
 import br.com.Barbearia.model.Especialidade;
-import br.com.Barbearia.model.Item_agendamento;
+import br.com.Barbearia.model.Item_agendamento; // Corrigido
 import br.com.Barbearia.utils.Conexao;
 
-public class Item_agendamentoDAO {
+public class Item_agendamentoDAO { // Corrigido
 
-    public void inserirItemAgendamento(Item_agendamento item) throws SQLException {
+    public void inserir(Item_agendamento item) throws SQLException { // Corrigido
         String sql = "INSERT INTO item_agendamento (valor_itemIg, especialidade, agendamento) VALUES (?, ?, ?)";
         
         try (Connection conexao = Conexao.getConnection();
              PreparedStatement stmt = conexao.prepareStatement(sql)) {
             
-            stmt.setBigDecimal(1, BigDecimal.valueOf(item.getValor_itemIg()));
+            stmt.setDouble(1, item.getValor_itemIg());
             stmt.setInt(2, item.getEspecialidade().getId_especialidadeEp());
             stmt.setInt(3, item.getAgendamento().getId_agendamentoAg());
             
@@ -31,7 +30,7 @@ public class Item_agendamentoDAO {
         }
     }
 
-    public void apagarItemAgendamento(int id) throws SQLException {
+    public void apagar(int id) throws SQLException {
         String sql = "DELETE FROM item_agendamento WHERE id_itemIg = ?";
         
         try (Connection conexao = Conexao.getConnection();
@@ -40,14 +39,11 @@ public class Item_agendamentoDAO {
             stmt.setInt(1, id);
             
             stmt.executeUpdate();
-        }catch (SQLException e) {
-            e.printStackTrace();
-            throw e;
         }
     }
 
-    public List<Item_agendamento> listarPorAgendamento(int idAgendamento) throws SQLException {
-        List<Item_agendamento> itens = new ArrayList<>();
+    public List<Item_agendamento> listarPorAgendamento(int idAgendamento) throws SQLException { // Corrigido
+        List<Item_agendamento> itens = new ArrayList<>(); // Corrigido
         final String sql = "SELECT " +
                            "    ia.id_itemIg, ia.valor_itemIg, ia.agendamento, " +
                            "    e.id_especialidadeEp, " +
@@ -74,14 +70,11 @@ public class Item_agendamentoDAO {
                     itens.add(mapearItemCompleto(rs));
                 }
             }
-        }catch (SQLException e) {
-            e.printStackTrace();
-            throw e;
         }
         return itens;
     }
 
-    private Item_agendamento mapearItemCompleto(ResultSet rs) throws SQLException {
+    private Item_agendamento mapearItemCompleto(ResultSet rs) throws SQLException { // Corrigido
         Barbeiro barbeiro = new Barbeiro();
         barbeiro.setCpf(rs.getString("barbeiro_cpf"));
         barbeiro.setNome(rs.getString("barbeiro_nome"));
@@ -89,7 +82,7 @@ public class Item_agendamentoDAO {
         Corte corte = new Corte();
         corte.setId_corte(rs.getInt("id_corte"));
         corte.setNome_corte(rs.getString("nome_corte"));
-        corte.setValor_corte(rs.getBigDecimal("valor_corte").doubleValue());
+        corte.setValor_corte(rs.getDouble("valor_corte"));
         corte.setDuracao(rs.getInt("duracao"));
 
         Especialidade especialidade = new Especialidade();
@@ -100,9 +93,9 @@ public class Item_agendamentoDAO {
         Agendamento agendamento = new Agendamento();
         agendamento.setId_agendamentoAg(rs.getInt("agendamento"));
 
-        Item_agendamento item = new Item_agendamento();
+        Item_agendamento item = new Item_agendamento(); // Corrigido
         item.setId_itemIg(rs.getInt("id_itemIg"));
-        item.setValor_itemIg(rs.getBigDecimal("valor_itemIg").doubleValue());
+        item.setValor_itemIg(rs.getDouble("valor_itemIg"));
         item.setEspecialidade(especialidade);
         item.setAgendamento(agendamento);
 

@@ -13,7 +13,7 @@ import br.com.Barbearia.utils.Conexao;
 
 public class CorteDAO {
 
-    public void inserirCorte(Corte corte) throws SQLException {
+    public void inserir(Corte corte) throws SQLException {
         String sql = "INSERT INTO corte (nome_corte, valor_corte, duracao) VALUES (?, ?, ?)";
         
         try (Connection conexao = Conexao.getConnection();
@@ -24,13 +24,10 @@ public class CorteDAO {
             stmt.setInt(3, corte.getDuracao());
             
             stmt.executeUpdate();
-        }catch (SQLException e) {
-            e.printStackTrace();
-            throw e;
         }
     }
 
-    public void editarCorte(Corte corte) throws SQLException {
+    public void editar(Corte corte) throws SQLException {
         String sql = "UPDATE corte SET nome_corte = ?, valor_corte = ?, duracao = ? WHERE id_corte = ?";
         
         try (Connection conexao = Conexao.getConnection();
@@ -42,12 +39,10 @@ public class CorteDAO {
             stmt.setInt(4, corte.getId_corte());
             
             stmt.executeUpdate();
-        }catch (SQLException e){
-        	e.printStackTrace();
         }
     }
 
-    public void apagarCorte(int id) throws SQLException {
+    public void apagar(int id) throws SQLException {
         String sql = "DELETE FROM corte WHERE id_corte = ?";
         
         try (Connection conexao = Conexao.getConnection();
@@ -56,13 +51,10 @@ public class CorteDAO {
             stmt.setInt(1, id);
             
             stmt.executeUpdate();
-        }catch (SQLException e) {
-            e.printStackTrace();
-            throw e;
         }
     }
 
-    public List<Corte> listarCortes() throws SQLException {
+    public List<Corte> listar() throws SQLException {
         List<Corte> cortes = new ArrayList<>();
         String sql = "SELECT id_corte, nome_corte, valor_corte, duracao FROM corte";
 
@@ -79,14 +71,11 @@ public class CorteDAO {
                 
                 cortes.add(corte);
             }
-        }catch (SQLException e) {
-            e.printStackTrace();
-            throw e;
         }
         return cortes;
     }
     
-    public Corte buscarCortePorId(int id) throws SQLException {
+    public Corte buscarPorId(int id) throws SQLException {
         String sql = "SELECT id_corte, nome_corte, valor_corte, duracao FROM corte WHERE id_corte = ?";
         Corte corte = null;
 
@@ -104,9 +93,6 @@ public class CorteDAO {
                     corte.setDuracao(rs.getInt("duracao"));
                 }
             }
-        }catch (SQLException e) {
-            e.printStackTrace();
-            throw e;
         }
         return corte;
     }

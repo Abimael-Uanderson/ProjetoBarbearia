@@ -1,52 +1,61 @@
 package br.com.Barbearia.controller;
 
-import br.com.Barbearia.dao.AgendamentoDAO;
-import br.com.Barbearia.model.Agendamento;
-import br.com.Barbearia.model.Cliente;
-
+import br.com.Barbearia.dao.*;
+import br.com.Barbearia.model.*;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
-@WebServlet("/AgendamentoController")
+@WebServlet("/agendamento")
 public class AgendamentoController extends HttpServlet {
-    private static final long serialVersionUID = 1L;
+
     private AgendamentoDAO agendamentoDAO;
+    private EspecialidadeDAO especialidadeDAO;
+    private Item_agendamentoDAO itemAgendamentoDAO;
+    private CorteDAO corteDAO;
+    private BarbeiroDAO barbeiroDAO;
 
     @Override
-    public void init() throws ServletException {
+    public void init() {
         agendamentoDAO = new AgendamentoDAO();
+        especialidadeDAO = new EspecialidadeDAO();
+        itemAgendamentoDAO = new Item_agendamentoDAO();
+        corteDAO = new CorteDAO();
+        barbeiroDAO = new BarbeiroDAO();
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
         if (action == null) {
-            action = "listar";
+            action = "passo3"; 
         }
 
         try {
-            switch (action) {
-                case "listar":
+            switch(action) {
+                case "passo3":
+                    mostrarPasso3(request, response);
+                    break;
+                case "passo4":
+                    mostrarPasso4(request, response);
+                    break;
+                case "verHistorico":
+                    verHistorico(request, response);
+                    break;
                 default:
-                    listarAgendamentos(request, response);
-                    break;
-                case "listarPorCliente":
-                    listarAgendamentosPorCliente(request, response);
-                    break;
-                case "buscarPorId":
-                    buscarAgendamentoPorId(request, response);
-                    break;
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Ação GET inválida.");
             }
         } catch (Exception e) {
             throw new ServletException(e);
@@ -54,243 +63,158 @@ public class AgendamentoController extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
-        if (action == null) {
-            action = "listar";
-        }
 
         try {
-            switch (action) {
+            switch(action) {
                 case "cadastrar":
                     cadastrarAgendamento(request, response);
                     break;
-                case "editar":
-                    editarAgendamento(request, response);
-                    break;
-                case "apagar":
-                    apagarAgendamento(request, response);
+                case "cancelar":
+                    cancelarAgendamento(request, response);
                     break;
                 default:
-                    listarAgendamentos(request, response);
-                    break;
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Ação POST inválida.");
             }
         } catch (Exception e) {
             throw new ServletException(e);
         }
     }
 
+    private void verHistorico(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("usuarioLogado") == null) {
+            response.sendRedirect("login.jsp");
+            return;
+        }
+
+        Cliente clienteLogado = (Cliente) session.getAttribute("usuarioLogado");
+        List<Agendamento> historico = agendamentoDAO.listarPorCliente(clienteLogado.getCpf());
+
+        request.setAttribute("listaAgendamentos", historico);
+        request.getRequestDispatcher("historicoAgendamentos.jsp").forward(request, response);
+    }
+    
+    private void cancelarAgendamento(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        int idAgendamento = Integer.parseInt(request.getParameter("id_agendamento"));
+        agendamentoDAO.cancelar(idAgendamento); 
+        response.sendRedirect("agendamento?action=verHistorico&msg=cancelado");
+    }
+
+    private void mostrarPasso3(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        int idCorte = Integer.parseInt(request.getParameter("id_corte"));
+        String cpfBarbeiro = request.getParameter("cpf_barbeiro");
+        String dataParam = request.getParameter("data");
+
+        LocalDate dataSelecionada = (dataParam == null || dataParam.isEmpty()) ? LocalDate.now() : LocalDate.parse(dataParam);
+        
+        Corte corte = corteDAO.buscarPorId(idCorte);
+        Barbeiro barbeiro = barbeiroDAO.buscarPorCpf(cpfBarbeiro);
+        
+        request.setAttribute("corteSelecionado", corte);
+        request.setAttribute("barbeiroSelecionado", barbeiro);
+        
+        List<Agendamento> agendaDoBarbeiro = agendamentoDAO.listarPorBarbeiroNaData(cpfBarbeiro, dataSelecionada);
+        List<LocalDateTime> horariosDisponiveis = gerarHorariosDisponiveis(agendaDoBarbeiro, dataSelecionada.atStartOfDay(), corte.getDuracao());
+
+        request.setAttribute("listaHorarios", horariosDisponiveis);
+        request.setAttribute("dataSelecionada", dataSelecionada);
+
+        request.getRequestDispatcher("agendamento-passo3-horario.jsp").forward(request, response);
+    }
+    
+    private void mostrarPasso4(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        int idCorte = Integer.parseInt(request.getParameter("id_corte"));
+        String cpfBarbeiro = request.getParameter("cpf_barbeiro");
+        String dataHora = request.getParameter("data_hora");
+
+        Corte corte = corteDAO.buscarPorId(idCorte);
+        Barbeiro barbeiro = barbeiroDAO.buscarPorCpf(cpfBarbeiro);
+
+        request.setAttribute("corteSelecionado", corte);
+        request.setAttribute("barbeiroSelecionado", barbeiro);
+        request.setAttribute("dataHoraSelecionada", LocalDateTime.parse(dataHora));
+
+        request.getRequestDispatcher("agendamento-passo4-confirmacao.jsp").forward(request, response);
+    }
+
     private void cadastrarAgendamento(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String dataAtendimentoParam = request.getParameter("data_atendimentoAg");
-        String statusAgendamento = request.getParameter("status_agendamentoAg");
-        String duracaoTotalParam = request.getParameter("duracao_totalAg");
-        String clienteCpf = request.getParameter("cliente");
-
-        if (dataAtendimentoParam == null || dataAtendimentoParam.isEmpty() ||
-            statusAgendamento == null || statusAgendamento.isEmpty() ||
-            duracaoTotalParam == null || duracaoTotalParam.isEmpty() ||
-            clienteCpf == null || clienteCpf.isEmpty()) {
-
-            request.setAttribute("mensagemErro", "Todos os campos são obrigatórios para o cadastro de agendamento.");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("erro.jsp");
-            dispatcher.forward(request, response);
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("usuarioLogado") == null) {
+            response.sendRedirect("login.jsp");
             return;
         }
+        
+        Cliente clienteLogado = (Cliente) session.getAttribute("usuarioLogado");
 
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            LocalDateTime dataAtendimento = LocalDateTime.parse(dataAtendimentoParam, formatter);
-            int duracaoTotal = Integer.parseInt(duracaoTotalParam);
+        String cpfBarbeiro = request.getParameter("cpf_barbeiro");
+        String dataHoraParam = request.getParameter("data_hora");
+        int idCorte = Integer.parseInt(request.getParameter("id_corte"));
 
-            LocalDateTime fimAgendamento = dataAtendimento.plusMinutes(duracaoTotal);
-
-            // Obter todos os agendamentos existentes para verificar conflitos
-            List<Agendamento> listaAgendamentos = agendamentoDAO.listarAgendamentos();
-
-            if (temConflito(dataAtendimento, fimAgendamento, listaAgendamentos)) {
-                request.setAttribute("mensagemErro", "Já existe um agendamento neste intervalo de horário.");
-                RequestDispatcher dispatcher = request.getRequestDispatcher("erro.jsp");
-                dispatcher.forward(request, response);
-                return;
-            }
-
-            Agendamento novoAgendamento = new Agendamento();
-            novoAgendamento.setData_atendimentoAg(dataAtendimento);
-            novoAgendamento.setStatus_agendamentoAg(statusAgendamento);
-            novoAgendamento.setDuracao_totalAg(duracaoTotal);
-
-            Cliente cliente = new Cliente();
-            cliente.setCpf(clienteCpf);
-            novoAgendamento.setCliente(cliente);
-
-            agendamentoDAO.inserirAgendamento(novoAgendamento);
-            response.sendRedirect("AgendamentoController?action=listar");
-
-        } catch (NumberFormatException e) {
-            request.setAttribute("mensagemErro", "Erro de formato: A duração total deve ser um número válido.");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("erro.jsp");
-            dispatcher.forward(request, response);
-        } catch (Exception e) {
-            System.err.println("Erro ao cadastrar agendamento: " + e.getMessage());
-            e.printStackTrace();
-            request.setAttribute("mensagemErro", "Erro ao cadastrar agendamento. Verifique se os dados estão corretos.");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("erro.jsp");
-            dispatcher.forward(request, response);
+        LocalDateTime inicioAgendamento = LocalDateTime.parse(dataHoraParam);
+        
+        Especialidade especialidade = especialidadeDAO.buscarPorCorteEBarbeiro(idCorte, cpfBarbeiro);
+        if (especialidade == null) {
+            throw new ServletException("O barbeiro não possui a especialidade para o corte informado.");
         }
+
+        int duracao = especialidade.getCorte().getDuracao();
+        
+        List<Agendamento> agendaDoBarbeiro = agendamentoDAO.listarPorBarbeiroNaData(cpfBarbeiro, inicioAgendamento.toLocalDate());
+        if (temConflito(inicioAgendamento, inicioAgendamento.plusMinutes(duracao), agendaDoBarbeiro)) {
+             request.setAttribute("mensagemErro", "Conflito de horário. Este horário foi reservado enquanto você decidia.");
+             request.getRequestDispatcher("erro.jsp").forward(request, response);
+             return;
+        }
+        
+        Barbeiro barbeiro = barbeiroDAO.buscarPorCpf(cpfBarbeiro);
+        Agendamento novoAgendamento = new Agendamento(inicioAgendamento, "AGENDADO", duracao, clienteLogado, barbeiro);
+        int novoAgendamentoId = agendamentoDAO.inserir(novoAgendamento);
+        novoAgendamento.setId_agendamentoAg(novoAgendamentoId);
+
+        Item_agendamento novoItem = new Item_agendamento();
+        novoItem.setAgendamento(novoAgendamento);
+        novoItem.setEspecialidade(especialidade);
+        novoItem.setValor_itemIg(especialidade.getCorte().getValor_corte());
+        itemAgendamentoDAO.inserir(novoItem);
+        
+        novoAgendamento.setItemAgendamento(novoItem);
+
+        request.setAttribute("agendamentoConfirmado", novoAgendamento);
+        request.getRequestDispatcher("agendamento-sucesso.jsp").forward(request, response);
     }
 
-    private void editarAgendamento(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String idParam = request.getParameter("id_agendamentoAg");
-        String dataAtendimentoParam = request.getParameter("data_atendimentoAg");
-        String statusAgendamento = request.getParameter("status_agendamentoAg");
-        String duracaoTotalParam = request.getParameter("duracao_totalAg");
-        String clienteCpf = request.getParameter("cliente");
+    // --- MÉTODOS DE LÓGICA INTERNA ---
 
-        if (idParam == null || idParam.isEmpty() ||
-            dataAtendimentoParam == null || dataAtendimentoParam.isEmpty() ||
-            statusAgendamento == null || statusAgendamento.isEmpty() ||
-            duracaoTotalParam == null || duracaoTotalParam.isEmpty() ||
-            clienteCpf == null || clienteCpf.isEmpty()) {
-
-            request.setAttribute("mensagemErro", "Todos os campos são obrigatórios para a edição de agendamento.");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("erro.jsp");
-            dispatcher.forward(request, response);
-            return;
-        }
-
-        try {
-            int id = Integer.parseInt(idParam);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            LocalDateTime dataAtendimento = LocalDateTime.parse(dataAtendimentoParam, formatter);
-            int duracaoTotal = Integer.parseInt(duracaoTotalParam);
-            LocalDateTime fimAgendamento = dataAtendimento.plusMinutes(duracaoTotal);
-
-            // Obter agendamentos para verificar conflito (ignorando o próprio id)
-            List<Agendamento> listaAgendamentos = agendamentoDAO.listarAgendamentos();
-            listaAgendamentos.removeIf(a -> a.getId_agendamentoAg() == id);
-
-            if (temConflito(dataAtendimento, fimAgendamento, listaAgendamentos)) {
-                request.setAttribute("mensagemErro", "Já existe um agendamento neste intervalo de horário.");
-                RequestDispatcher dispatcher = request.getRequestDispatcher("erro.jsp");
-                dispatcher.forward(request, response);
-                return;
-            }
-
-            Agendamento agendamento = new Agendamento();
-            agendamento.setId_agendamentoAg(id);
-            agendamento.setData_atendimentoAg(dataAtendimento);
-            agendamento.setStatus_agendamentoAg(statusAgendamento);
-            agendamento.setDuracao_totalAg(duracaoTotal);
-
-            Cliente cliente = new Cliente();
-            cliente.setCpf(clienteCpf);
-            agendamento.setCliente(cliente);
-
-            agendamentoDAO.editarAgendamento(agendamento);
-            response.sendRedirect("AgendamentoController?action=listar");
-        } catch (NumberFormatException e) {
-            request.setAttribute("mensagemErro", "Erro de formato: O ID e a duração total devem ser números válidos.");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("erro.jsp");
-            dispatcher.forward(request, response);
-        } catch (Exception e) {
-            System.err.println("Erro ao editar agendamento: " + e.getMessage());
-            e.printStackTrace();
-            request.setAttribute("mensagemErro", "Erro ao editar agendamento. Verifique se os dados estão corretos.");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("erro.jsp");
-            dispatcher.forward(request, response);
-        }
-    }
-
-    private void apagarAgendamento(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String idParam = request.getParameter("id_agendamentoAg");
-        if (idParam == null || idParam.isEmpty()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID do agendamento é obrigatório para apagar.");
-            return;
-        }
-
-        try {
-            int id = Integer.parseInt(idParam);
-            agendamentoDAO.apagarAgendamento(id);
-            response.sendRedirect("AgendamentoController?action=listar");
-        } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID do agendamento deve ser um número válido.");
-        } catch (SQLException e) {
-            System.err.println("Erro ao apagar agendamento: " + e.getMessage());
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao apagar agendamento.");
-        }
-    }
-
-    private void listarAgendamentos(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        try {
-            List<Agendamento> listaAgendamentos = agendamentoDAO.listarAgendamentos();
-            request.setAttribute("listaAgendamentos", listaAgendamentos);
-            RequestDispatcher dispatcher = request.getRequestDispatcher("listaAgendamentos.jsp");
-            dispatcher.forward(request, response);
-        } catch (SQLException e) {
-            System.err.println("Erro ao listar agendamentos: " + e.getMessage());
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao listar agendamentos.");
-        }
-    }
-
-    private void listarAgendamentosPorCliente(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String cpfParam = request.getParameter("cpfCliente");
-        if (cpfParam == null || cpfParam.isEmpty()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "CPF do cliente é obrigatório.");
-            return;
-        }
-
-        try {
-            List<Agendamento> listaAgendamentos = agendamentoDAO.listarAgendamentosPorCliente(cpfParam);
-            request.setAttribute("listaAgendamentos", listaAgendamentos);
-            RequestDispatcher dispatcher = request.getRequestDispatcher("listaAgendamentos.jsp");
-            dispatcher.forward(request, response);
-        } catch (SQLException e) {
-            System.err.println("Erro ao listar agendamentos por cliente: " + e.getMessage());
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao listar agendamentos.");
-        }
-    }
-
-    private void buscarAgendamentoPorId(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String idParam = request.getParameter("id_agendamentoAg");
-        if (idParam == null || idParam.isEmpty()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID do agendamento é obrigatório para a busca.");
-            return;
-        }
-
-        try {
-            int id = Integer.parseInt(idParam);
-            Agendamento agendamento = agendamentoDAO.buscarAgendamentoPorId(id);
-
-            if (agendamento != null) {
-                request.setAttribute("agendamentoEncontrado", agendamento);
-                RequestDispatcher dispatcher = request.getRequestDispatcher("detalheAgendamento.jsp");
-                dispatcher.forward(request, response);
-            } else {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Agendamento não encontrado.");
-            }
-        } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID do agendamento deve ser um número válido.");
-        } catch (SQLException e) {
-            System.err.println("Erro ao buscar agendamento por ID: " + e.getMessage());
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao buscar agendamento.");
-        }
-    }
-
-    // Método auxiliar para verificar conflito de horários
-    private boolean temConflito(LocalDateTime novoInicio, LocalDateTime novoFim, List<Agendamento> agendamentos) {
-        for (Agendamento agendamento : agendamentos) {
-            LocalDateTime inicioExistente = agendamento.getData_atendimentoAg();
-            LocalDateTime fimExistente = inicioExistente.plusMinutes(agendamento.getDuracao_totalAg());
-
+    private boolean temConflito(LocalDateTime novoInicio, LocalDateTime novoFim, List<Agendamento> agendaDoBarbeiro) {
+        for (Agendamento agendamentoExistente : agendaDoBarbeiro) {
+            LocalDateTime inicioExistente = agendamentoExistente.getData_atendimentoAg();
+            LocalDateTime fimExistente = inicioExistente.plusMinutes(agendamentoExistente.getDuracao_totalAg());
             if (novoInicio.isBefore(fimExistente) && novoFim.isAfter(inicioExistente)) {
-                return true; // Existe sobreposição
+                return true;
             }
         }
         return false;
     }
+
+    private List<LocalDateTime> gerarHorariosDisponiveis(List<Agendamento> agendamentos, LocalDateTime inicioDoDia, int duracao) {
+        List<LocalDateTime> horarios = new ArrayList<>();
+        
+        LocalDateTime fimManha = inicioDoDia.withHour(12);
+        for (LocalDateTime hora = inicioDoDia.withHour(8); !hora.plusMinutes(duracao).isAfter(fimManha); hora = hora.plusMinutes(30)) {
+            if (!temConflito(hora, hora.plusMinutes(duracao), agendamentos)) {
+                horarios.add(hora);
+            }
+        }
+        
+        LocalDateTime fimTarde = inicioDoDia.withHour(19);
+        for (LocalDateTime hora = inicioDoDia.withHour(13); !hora.plusMinutes(duracao).isAfter(fimTarde); hora = hora.plusMinutes(30)) {
+            if (!temConflito(hora, hora.plusMinutes(duracao), agendamentos)) {
+                horarios.add(hora);
+            }
+        }
+        return horarios;
+    }
 }
+

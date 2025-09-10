@@ -64,14 +64,14 @@
 
             <div class="pt-4">
                 <button type="submit"
-                        class="w-full h-[50px] text-center font-bold text-wine-main rounded-md bg-white hover:bg-gray-200 transition-colors">
+                        class="w-full h-[50px] text-center font-bold text-wine-main rounded-md bg-white hover:bg-gray-200 transition-colors" >
                     Entrar
                 </button>
             </div>
         </form>
 
         <div class="text-center mt-6">
-            <a href="cadastro.jsp" class="font-montserrat text-sm text-white underline">
+            <a href="cadastroPessoa.jsp" class="font-montserrat text-sm text-white underline">
                 Criar conta
             </a>
         </div>
