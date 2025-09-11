@@ -55,14 +55,44 @@ public class EspecialidadeDAO {
         }
         return barbeiros;
     }
-
+    
     /**
-     * MÉTODO CHAVE: Busca uma especialidade específica e carrega os dados completos do corte.
-     * Essencial para o AgendamentoController saber o valor do serviço.
-     * @param idCorte O ID do corte desejado.
-     * @param cpfBarbeiro O CPF do barbeiro.
-     * @return Um objeto Especialidade com os dados do Corte preenchidos, ou null se não encontrar.
+     * NOVO MÉTODO: Lista todas as especialidades cadastradas.
+     * @return Uma lista de objetos Especialidade com dados completos de Barbeiro e Corte.
      */
+    public List<Especialidade> listarTodas() throws SQLException {
+        List<Especialidade> especialidades = new ArrayList<>();
+        String sql = "SELECT e.id_especialidadeEp, " +
+                     "b.cpf as barbeiro_cpf, b.nome as barbeiro_nome, " +
+                     "c.id_corte, c.nome_corte " +
+                     "FROM especialidade e " +
+                     "INNER JOIN barbeiro b ON e.barbeiro = b.cpf " +
+                     "INNER JOIN corte c ON e.corte = c.id_corte " +
+                     "ORDER BY b.nome, c.nome_corte";
+        try (Connection conexao = Conexao.getConnection();
+             PreparedStatement stmt = conexao.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                Barbeiro b = new Barbeiro();
+                b.setCpf(rs.getString("barbeiro_cpf"));
+                b.setNome(rs.getString("barbeiro_nome"));
+
+                Corte c = new Corte();
+                c.setId_corte(rs.getInt("id_corte"));
+                c.setNome_corte(rs.getString("nome_corte"));
+
+                Especialidade e = new Especialidade();
+                e.setId_especialidadeEp(rs.getInt("id_especialidadeEp"));
+                e.setBarbeiro(b);
+                e.setCorte(c);
+                
+                especialidades.add(e);
+            }
+        }
+        return especialidades;
+    }
+
+
     public Especialidade buscarPorCorteEBarbeiro(int idCorte, String cpfBarbeiro) throws SQLException {
         String sql = "SELECT e.id_especialidadeEp, " +
                      "c.id_corte, c.nome_corte, c.valor_corte, c.duracao " +
@@ -95,4 +125,3 @@ public class EspecialidadeDAO {
         return especialidade;
     }
 }
-

@@ -1,5 +1,6 @@
 package br.com.Barbearia.controller;
 
+import br.com.Barbearia.dao.BarbeiroDAO;
 import br.com.Barbearia.dao.CorteDAO;
 import br.com.Barbearia.dao.EspecialidadeDAO;
 import br.com.Barbearia.model.Barbeiro;
@@ -11,6 +12,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -19,12 +21,14 @@ import java.util.List;
 @WebServlet("/especialidade")
 public class EspecialidadeController extends HttpServlet {
     private EspecialidadeDAO especialidadeDAO;
-    private CorteDAO corteDAO; // Adicionado para buscar detalhes do corte
+    private CorteDAO corteDAO;
+    private BarbeiroDAO barbeiroDAO;
 
     @Override
     public void init() {
         especialidadeDAO = new EspecialidadeDAO();
-        corteDAO = new CorteDAO(); // Inicializa o CorteDAO
+        corteDAO = new CorteDAO();
+        barbeiroDAO = new BarbeiroDAO();
     }
 
     @Override
@@ -32,7 +36,16 @@ public class EspecialidadeController extends HttpServlet {
             throws ServletException, IOException {
         String action = request.getParameter("action");
         if (action == null) {
-            action = "listar"; // Ação padrão para admin
+            action = "gerenciar"; // Ação padrão para admin
+        }
+        
+        // Proteção para área de admin
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("adminLogado") == null) {
+            if(!"listarBarbeirosPorCorte".equals(action)) { // Permite a ação do cliente
+                response.sendRedirect("admin");
+                return;
+            }
         }
 
         try {
@@ -40,9 +53,9 @@ public class EspecialidadeController extends HttpServlet {
                 case "listarBarbeirosPorCorte":
                     listarBarbeirosPorCorte(request, response);
                     break;
-                case "listar": // Ação de admin
+                case "gerenciar":
                 default:
-                    response.sendRedirect("admin/dashboard.jsp"); 
+                    mostrarTelaGerenciar(request, response);
                     break;
             }
         } catch (Exception e) {
@@ -72,9 +85,8 @@ public class EspecialidadeController extends HttpServlet {
         }
     }
 
-    // --- LÓGICA DO FLUXO DO CLIENTE ---
-
     private void listarBarbeirosPorCorte(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
+        // ... (código existente, sem alteração)
         String idCorteParam = request.getParameter("id_corte");
 
         if (idCorteParam == null || idCorteParam.isEmpty()) {
@@ -83,13 +95,9 @@ public class EspecialidadeController extends HttpServlet {
 
         int idCorte = Integer.parseInt(idCorteParam);
         
-        // Busca a lista de barbeiros que fazem o corte
         List<Barbeiro> barbeiros = especialidadeDAO.listarBarbeirosPorCorte(idCorte);
-        
-        // Busca os detalhes do corte selecionado para exibir na página
         Corte corteSelecionado = corteDAO.buscarPorId(idCorte);
 
-        // Envia ambos os dados para a página do Passo 2
         request.setAttribute("listaBarbeiros", barbeiros);
         request.setAttribute("corteSelecionado", corteSelecionado);
         
@@ -97,17 +105,22 @@ public class EspecialidadeController extends HttpServlet {
         dispatcher.forward(request, response);
     }
     
-    // --- LÓGICA PARA O PAINEL DE ADMIN ---
+    private void mostrarTelaGerenciar(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
+        List<Barbeiro> listaBarbeiros = barbeiroDAO.listar();
+        List<Corte> listaCortes = corteDAO.listar();
+        List<Especialidade> listaEspecialidades = especialidadeDAO.listarTodas();
+
+        request.setAttribute("listaBarbeiros", listaBarbeiros);
+        request.setAttribute("listaCortes", listaCortes);
+        request.setAttribute("listaEspecialidades", listaEspecialidades);
+        
+        RequestDispatcher dispatcher = request.getRequestDispatcher("admin/gerenciar-especialidades.jsp");
+        dispatcher.forward(request, response);
+    }
 
     private void cadastrarEspecialidade(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException, ServletException {
-        String idCorteParam = request.getParameter("id_corte");
+        int idCorte = Integer.parseInt(request.getParameter("id_corte"));
         String cpfBarbeiro = request.getParameter("cpf_barbeiro");
-
-        if (idCorteParam == null || cpfBarbeiro == null) {
-             throw new ServletException("Parâmetros id_corte e cpf_barbeiro são obrigatórios.");
-        }
-
-        int idCorte = Integer.parseInt(idCorteParam);
 
         Corte corte = new Corte();
         corte.setId_corte(idCorte);
@@ -118,13 +131,12 @@ public class EspecialidadeController extends HttpServlet {
         Especialidade novaEspecialidade = new Especialidade(corte, barbeiro);
         especialidadeDAO.inserir(novaEspecialidade);
 
-        response.sendRedirect("admin/especialidades.jsp?msg=sucesso");
+        response.sendRedirect("especialidade?action=gerenciar&msg=sucesso");
     }
 
     private void apagarEspecialidade(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {
         int idEspecialidade = Integer.parseInt(request.getParameter("id_especialidade"));
         especialidadeDAO.apagar(idEspecialidade);
-        response.sendRedirect("admin/especialidades.jsp?msg=apagado");
+        response.sendRedirect("especialidade?action=gerenciar&msg=apagado");
     }
 }
-

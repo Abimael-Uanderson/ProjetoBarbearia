@@ -6,6 +6,7 @@ public class Agendamento {
 	private int id_agendamentoAg;
     private LocalDateTime data_atendimentoAg;
     private String status_agendamentoAg;
+    private String status_pagamentoAg; // NOVO CAMPO
     private int duracao_totalAg;
     private Cliente cliente;
     private Barbeiro barbeiro;
@@ -29,6 +30,7 @@ public class Agendamento {
 		this.duracao_totalAg = duracao_totalAg;
 		this.cliente = cliente;
 		this.barbeiro = barbeiro;
+        this.status_pagamentoAg = "PENDENTE"; // Valor padrão ao criar um novo
 	}
 
 	// Getters e Setters
@@ -45,6 +47,10 @@ public class Agendamento {
 	public Barbeiro getBarbeiro() { return barbeiro; }
 	public void setBarbeiro(Barbeiro barbeiro) { this.barbeiro = barbeiro; }
 	
+    // GETTER E SETTER PARA O NOVO CAMPO
+    public String getStatus_pagamentoAg() { return status_pagamentoAg; }
+    public void setStatus_pagamentoAg(String status_pagamentoAg) { this.status_pagamentoAg = status_pagamentoAg; }
+
 	// --- MÉTODOS ADICIONADOS E CORRIGIDOS ---
 	public Item_agendamento getItemAgendamento() {
 		return itemAgendamento;
@@ -59,4 +65,3 @@ public class Agendamento {
 		this.nomeServico = nomeServico;
 	}
 }
-
